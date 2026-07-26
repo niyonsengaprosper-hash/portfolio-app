@@ -23,16 +23,17 @@ jobs:
                 docker push ${{ secrets.DOCKER_USERNAME }}/ciportofolio
                 docker push ${{ secrets.DOCKER_USERNAME }}/ciportofolio:${{ github.run_number }}
                     
-    deploy:
-        needs: build
-        runs-on: ubuntu-latest
-        steps:
+    
+             -name: login to ECR
+              id: login-ecr
+              users: aws-actions/amazon-ecr-login@v2
+
             - name: SSH to Linux and run container
               uses: appleboy/ssh-action@v1
               with:
-                host: ${{ secrets.HOST }}
-                username: ${{ secrets.SSH_USERNAME }}
-                key: ${{ secrets.PRIVATE_KEY }}
+                ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry}}
+                IMAGE_TAG: ${{github.sha}}
+              run:
                 script: |
                     docker rm -f portofolio|| echo "Container not found, skipping removal"
                     docker rmi -f ${{ secrets.DOCKER_USERNAME }}/ciportofolio || echo "Image do not exit"
